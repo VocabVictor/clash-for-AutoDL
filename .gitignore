@@ -1,7 +1,15 @@
-conf/config.yaml
-conf/cache.db
-clash.log
-.env
-logs/
+# Build directories
 bin/
-subconverter/
+build*/
+repo/
+
+# Generated files
+*.deb
+*.log
+
+# IDE files
+.vscode/
+.idea/
+
+# System files
+.DS_Store

@@ -1,0 +1,32 @@
+name: Publish Package
+
+on:
+  release:
+    types: [created]
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake libcurl4-openssl-dev libyaml-cpp-dev
+
+    - name: Build packages
+      run: |
+        dev/build/build_all.sh
+
+    - name: Setup repository
+      run: |
+        dev/repo/create_repo.sh
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./repo

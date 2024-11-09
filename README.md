@@ -10,7 +10,7 @@
 
 > **注意：** Ping使用的是 ICMP（Internet Control Message Protocol） 协议，是网络层协议，Clash 只会代理传输层的TCP和UDP流量，因此无论clash是否能够正常工作，ping google.com 都是不会有效果的。
 
-> **注意：** 关于本项目的适配问题，对于RHEL/Debian系列Linux系统，x86_64/aarch64平台的一般云服务器和本地服务器应该都是适配的，比如阿里云，腾讯云，autodl，趋势云上，本地的3090，4090服务器上，作者都做过相关测试，可以正常运行。
+> **注意：** 关于本项目的适配问题，对于RHEL/Debian系列Linux系统，x86_64/aarch64平台的一般云服务器和本地服务器应该都是适配的，比阿里云，腾讯云，autodl，趋势云上，本地的3090，4090服务器上，作者都做过相关测试，可以正常运行。
 
 # 功能特性
 
@@ -37,7 +37,7 @@
 - 使用过程中如遇到问题，请优先查已有的 [issues](https://github.com/VocabVictor/clash-for-AutoDL/issues?q=is%3Aissue+is%3Aclosed)。(你在网页上看不到issue或者issue很少，是因为部分issue我认为已经解决，被关闭了，请在issue中搜索关键字，或者在issue下留言。)
 - 在进行issues提交前，请替换提交内容中是敏感信息（例如：订阅地址）。
 - 此项目不提供任何订阅信息，请自行准备Clash订阅地址。
-- 运行前请手动更改`.env`文件中的`CLASH_URL`变量值，否则无法正常运行。
+- 运行请手动更改`.env`文件中的`CLASH_URL`变量值，否则无法正常运行。
 
 > **注意**：当你在使用此项目时，遇到任何无法独自解决的问题请优先前往 [issues](https://github.com/VocabVictor/clash-for-AutoDL/issues?q=is%3Aissue+is%3Aclosed) 寻找解决方法。由于空闲时间有限，后续将不再对Issues中 “已经解答”、“已有解决方案” 的问题进行重复性的回答。
 
@@ -250,3 +250,82 @@ Secret忘记了，也可以上conf/config.yaml文件中查看。
    目前此项目已集成自动识别和转换clash配置文件的功能。如果依然无法使用，则需要通过自建或者第三方平台（不推荐，有泄露风险）对订阅地址转换。
 
 3. 程序日志中出现`error: unsupported rule type RULE-SET`报错，解决方法查看官方[WIKI](https://github.com/Dreamacro/clash/wiki/FAQ#error-unsupported-rule-type-rule-set)
+
+# Clash for AutoDL
+
+## 安装说明
+
+虽然 clash-for-autodl 是一个用户级应用，但由于 Debian 包管理系统的要求，安装时需要 root 权限：
+
+```bash
+sudo apt install ./clash-for-autodl_1.0.0.deb
+```
+
+安装过程会：
+1. 将程序安装到系统目录
+2. 在用户目录下创建必要的配置文件和目录
+3. 设置正确的文件权限
+
+安装完成后，所有操作都不需要 root 权限，直接使用以下命令：
+
+```bash
+# 配置
+nano ~/.clash-for-autodl/.env
+
+# 启动服务
+clash_manager start
+
+# 停止服务
+clash_manager stop
+
+# 重启服务
+clash_manager restart
+```
+
+所有配置文件和日志都保存在用户的主目录下（~/.clash-for-autodl/），不会影响其他用户。
+
+## 从镜像源安装
+
+1. 添加 GPG 密钥：
+```bash
+curl -fsSL https://your-repo-url/gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/clash-for-autodl-archive-keyring.gpg
+```
+
+2. 添加软件源：
+```bash
+echo "deb [signed-by=/usr/share/keyrings/clash-for-autodl-archive-keyring.gpg] https://your-repo-url stable main" | sudo tee /etc/apt/sources.list.d/clash-for-autodl.list
+```
+
+3. 更新并安装：
+```bash
+sudo apt update
+sudo apt install clash-for-autodl
+```
+
+## 快速安装
+
+1. 添加软件源：
+```bash
+# 添加软件源
+echo "deb [trusted=yes] https://vocabvictor.github.io/clash-for-autodl/dists/stable/main/binary-$(dpkg --print-architecture) ./" | sudo tee /etc/apt/sources.list.d/clash-for-autodl.list
+```
+
+2. 安装软件：
+```bash
+sudo apt update
+sudo apt install clash-for-autodl
+```
+
+3. 配置：
+```bash
+# 编辑配置文件
+nano ~/.clash-for-autodl/.env
+
+# 添加你的订阅地址
+CLASH_URL="你的订阅地址"
+```
+
+4. 启动服务：
+```bash
+clash_manager start
+```

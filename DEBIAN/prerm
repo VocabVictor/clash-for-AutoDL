@@ -1,0 +1,31 @@
+#!/bin/bash
+set -e
+
+# 获取真实用户
+REAL_USER=${SUDO_USER:-$USER}
+if [ "$REAL_USER" = "root" ]; then
+    echo "Warning: Cannot determine real user, skipping user-specific cleanup"
+    exit 0
+fi
+
+# 获取用户的家目录
+USER_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
+CLASH_HOME="$USER_HOME/.clash-for-autodl"
+
+# 停止并禁用服务
+su - "$REAL_USER" -c "XDG_RUNTIME_DIR=/run/user/$(id -u $REAL_USER) systemctl --user stop clash-for-autodl.service" || true
+su - "$REAL_USER" -c "XDG_RUNTIME_DIR=/run/user/$(id -u $REAL_USER) systemctl --user disable clash-for-autodl.service" || true
+rm -f "$USER_HOME/.config/systemd/user/clash-for-autodl.service" || true
+
+# 删除安装目录（如果存在）
+if [ -d "${CLASH_HOME}" ]; then
+    rm -rf "${CLASH_HOME}" || true
+fi
+
+# 删除二进制链接（如果存在）
+USER_BIN="$USER_HOME/.local/bin"
+if [ -L "${USER_BIN}/clash_manager" ]; then
+    rm -f "${USER_BIN}/clash_manager" || true
+fi
+
+exit 0

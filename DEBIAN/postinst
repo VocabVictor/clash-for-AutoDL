@@ -1,0 +1,94 @@
+#!/bin/bash
+set -e
+
+# 获取真实用户
+REAL_USER=${SUDO_USER:-$USER}
+if [ "$REAL_USER" = "root" ]; then
+    echo "Error: Cannot determine real user"
+    exit 1
+fi
+
+# 获取用户的家目录
+USER_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
+CLASH_HOME="$USER_HOME/.clash-for-autodl"
+USER_BIN="$USER_HOME/.local/bin"
+
+# 创建必要的目录
+mkdir -p "${CLASH_HOME}"/{conf,logs,bin}
+mkdir -p "$USER_BIN"
+mkdir -p "$USER_HOME/.config/systemd/user"
+
+# 复制文件到用户目录
+cp -r /usr/share/clash-for-autodl/* "${CLASH_HOME}/"
+
+# 如果 .env 文件不存在，从示例文件创建
+if [ ! -f "${CLASH_HOME}/.env" ]; then
+    cp "/usr/share/clash-for-autodl/.env.example" "${CLASH_HOME}/.env"
+fi
+
+# 创建可执行文件链接
+ln -sf "${CLASH_HOME}/clash_manager" "$USER_BIN/clash_manager"
+
+# 修改所有权
+chown -R "$REAL_USER:$REAL_USER" "${CLASH_HOME}"
+chown -R "$REAL_USER:$REAL_USER" "$USER_BIN"
+chown -R "$REAL_USER:$REAL_USER" "$USER_HOME/.config/systemd"
+
+# 设置权限
+chmod 755 "${CLASH_HOME}"
+chmod 700 "${CLASH_HOME}/conf"
+chmod 700 "${CLASH_HOME}/logs"
+chmod 755 "${CLASH_HOME}/bin"
+chmod 755 "${CLASH_HOME}/clash_manager"
+chmod 600 "${CLASH_HOME}/.env"
+
+# 添加环境变量到用户的 .bashrc
+BASHRC="$USER_HOME/.bashrc"
+if [ -f "$BASHRC" ]; then
+    if ! grep -q "$USER_BIN" "$BASHRC"; then
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$BASHRC"
+        chown "$REAL_USER:$REAL_USER" "$BASHRC"
+    fi
+fi
+
+# 使用 clash_manager 初始化环境
+echo "Initializing clash environment..."
+if ! su - "$REAL_USER" -c "${USER_BIN}/clash_manager init"; then
+    echo "Warning: Failed to initialize clash environment"
+    echo "Please run 'clash_manager init' manually after installation"
+fi
+
+# 创建 systemd 服务文件
+cat > "$USER_HOME/.config/systemd/user/clash-for-autodl.service" << EOF
+[Unit]
+Description=Clash for AutoDL
+After=network.target
+
+[Service]
+Type=simple
+Environment="HOME=${USER_HOME}"
+WorkingDirectory=${CLASH_HOME}
+ExecStart=${CLASH_HOME}/bin/clash-linux-$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') -d ${CLASH_HOME}/conf
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+EOF
+
+chmod 644 "$USER_HOME/.config/systemd/user/clash-for-autodl.service"
+
+# 启用并启动服务
+echo "Enabling and starting clash service..."
+loginctl enable-linger "$REAL_USER" || true
+su - "$REAL_USER" -c "XDG_RUNTIME_DIR=/run/user/$(id -u $REAL_USER) systemctl --user daemon-reload" || true
+su - "$REAL_USER" -c "XDG_RUNTIME_DIR=/run/user/$(id -u $REAL_USER) systemctl --user enable clash-for-autodl.service" || true
+su - "$REAL_USER" -c "XDG_RUNTIME_DIR=/run/user/$(id -u $REAL_USER) systemctl --user start clash-for-autodl.service" || true
+
+# 提示用户配置
+echo "Installation completed!"
+echo "Please configure your Clash URL in ${CLASH_HOME}/.env"
+echo "Clash service has been enabled and started"
+echo "Please run: source ~/.bashrc"
+
+exit 0

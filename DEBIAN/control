@@ -1,0 +1,13 @@
+Package: clash-for-autodl
+Version: 1.0.0
+Section: net
+Priority: optional
+Architecture: amd64
+Depends: curl, wget, gzip, tar, libcurl4, coreutils
+Maintainer: Your Name <your.email@example.com>
+Description: Clash for AutoDL Platform
+ A customized Clash client for AutoDL platform that helps
+ accelerate downloads from international resources.
+ This package includes automatic configuration and
+ management scripts for Clash.
+ All files are installed in user's home directory.
