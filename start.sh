@@ -5,6 +5,12 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
+# 检查是否作为服务运行
+SERVICE_MODE=false
+if [[ "$1" == "--service" ]]; then
+    SERVICE_MODE=true
+fi
+
 # wget 命令检查
 if wget --help | grep -q 'show-progress'; then
     WGET_CMD="wget -q --show-progress"
@@ -19,13 +25,27 @@ Status=0  # 脚本运行状态，默认为0，表示成功
 #==============================================================
 
 # 文件路径变量
-Server_Dir="$( cd "$( dirname "$(readlink -f "${BASH_SOURCE[0]}")" )" && pwd )"
-Conf_Dir="$Server_Dir/conf"
-Log_Dir="$Server_Dir/logs"
+if [[ "$SERVICE_MODE" == "true" ]]; then
+    # 系统服务模式
+    Server_Dir="/usr/share/clash-for-autodl"
+    Conf_Dir=${CLASH_CONFIG_DIR:-"/etc/clash-for-autodl"}
+    Log_Dir=${CLASH_LOG_DIR:-"/var/log/clash-for-autodl"}
+else
+    # 正常模式 - 本地运行
+    Server_Dir="$( cd "$( dirname "$(readlink -f "${BASH_SOURCE[0]}")" )" && pwd )"
+    Conf_Dir="$Server_Dir/conf"
+    Log_Dir="$Server_Dir/logs"
+fi
+
 SUBCONVERTER_DIR="$Server_Dir/subconverter"
 
 # 注入配置文件里面的变量
-source $Server_Dir/.env
+ENV_FILE="$Conf_Dir/.env"
+if [[ -f "$ENV_FILE" ]]; then
+    source "$ENV_FILE"
+elif [[ -f "$Server_Dir/.env" ]]; then
+    source "$Server_Dir/.env"
+fi
 
 # 第三方库版本变量
 CLASH_VERSION="v1.18.7"
@@ -488,8 +508,13 @@ function shutdown_system() {
 }
 EOF
 
-    # 使用 envsubst 替换变量
-    envsubst < /tmp/clash_functions_template > /tmp/clash_functions
+    # 使用 sed 替换变量 (替代 envsubst)
+    cp /tmp/clash_functions_template /tmp/clash_functions
+    sed -i "s|\$CLASH_PORT|$CLASH_PORT|g" /tmp/clash_functions
+    sed -i "s|\${GREEN}|${GREEN}|g" /tmp/clash_functions
+    sed -i "s|\${NC}|${NC}|g" /tmp/clash_functions
+    sed -i "s|\${RED}|${RED}|g" /tmp/clash_functions
+    sed -i "s|\$Server_Dir|$Server_Dir|g" /tmp/clash_functions
 
     # 在临时函数文件中将 #is_quiet 替换为 $is_quiet
     sed -i 's/#is_quiet/$is_quiet/g' /tmp/clash_functions

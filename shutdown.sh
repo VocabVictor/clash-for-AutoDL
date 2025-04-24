@@ -1,7 +1,23 @@
 #!/bin/bash
 
+# 检查是否作为服务运行
+SERVICE_MODE=false
+if [[ "$1" == "--service" ]]; then
+    SERVICE_MODE=true
+fi
+
 # 获取脚本工作目录绝对路径
-export Server_Dir=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
+if [[ "$SERVICE_MODE" == "true" ]]; then
+    # 系统服务模式
+    export Server_Dir="/usr/share/clash-for-autodl"
+    Conf_Dir=${CLASH_CONFIG_DIR:-"/etc/clash-for-autodl"}
+    Log_Dir=${CLASH_LOG_DIR:-"/var/log/clash-for-autodl"}
+else
+    # 正常模式 - 本地运行
+    export Server_Dir=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
+    Conf_Dir="$Server_Dir/conf"
+    Log_Dir="$Server_Dir/logs"
+fi
 
 # 关闭监视模式,不再报告后台作业状态
 set +m
@@ -81,35 +97,33 @@ rm -rf "$Log_Dir"
 # 清除环境变量
 unset http_proxy https_proxy no_proxy HTTP_PROXY HTTPS_PROXY NO_PROXY
 
-# 从 .bashrc 中删除函数和相关行
-functions_to_remove=("proxy_on" "proxy_off" "shutdown_system")
-for func in "${functions_to_remove[@]}"; do
-  sed -i -E "/^function[[:space:]]+${func}[[:space:]]*()/,/^}$/d" ~/.bashrc
-done
+# 如果不是服务模式，则删除.bashrc中的函数
+if [[ "$SERVICE_MODE" != "true" ]]; then
+    # 从 .bashrc 中删除函数和相关行
+    functions_to_remove=("proxy_on" "proxy_off" "shutdown_system")
+    for func in "${functions_to_remove[@]}"; do
+      sed -i -E "/^function[[:space:]]+${func}[[:space:]]*()/,/^}$/d" ~/.bashrc
+    done
 
-sed -i '/^# 开启系统代理/d; /^# 关闭系统代理/d; /^# 新增关闭系统函数/d; /^# 检查clash进程是否正常启动/d; /proxy_on/d; /^#.*proxy_on/d' ~/.bashrc
-sed -i '/^$/N;/^\n$/D' ~/.bashrc
+    sed -i '/^# 开启系统代理/d; /^# 关闭系统代理/d; /^# 新增关闭系统函数/d; /^# 检查clash进程是否正常启动/d; /proxy_on/d; /^#.*proxy_on/d' ~/.bashrc
+    sed -i '/^$/N;/^\n$/D' ~/.bashrc
 
-# 重新加载.bashrc文件
-source ~/.bashrc
+    # 重新加载.bashrc文件
+    source ~/.bashrc
 
-echo -e "\033[32m \n[√]服务关闭成功\n \033[0m"
+    echo -e "\033[32m \n[√]服务关闭成功\n \033[0m"
 
-# 询问用户是否删除工作目录
-read -p "是否删除工作目录 ${Server_Dir}? [y/n]: " answer
-case $answer in
-  [Yy]* )
-    echo "正在删除工作目录 ${Server_Dir}..."
-    rm -rf "$Server_Dir"
-    echo "工作目录已删除。"
-    ;;
-  [Nn]* )
-    echo "未删除工作目录。"
-    ;;
-  * )
-    echo "请输入 'y' 或 'n'。"
-    ;;
-esac
+    # 询问用户是否删除工作目录
+    read -p "是否删除工作目录 ${Server_Dir}? [y/n]: " answer
+    if [[ $answer =~ ^[Yy]$ ]]; then
+        rm -rf "${Server_Dir}"
+        echo "工作目录已删除。"
+    else
+        echo "工作目录保留。"
+    fi
+else
+    echo -e "\033[32m \n[√]服务关闭成功\n \033[0m"
+fi
 
 # 恢复监视模式
 set -m

@@ -1,0 +1,12 @@
+Package: clash-for-autodl
+Version: 1.0.0
+Section: net
+Priority: optional
+Architecture: all
+Depends: bash, wget, curl, openssl, gzip, coreutils, sed
+Recommends: gettext
+Maintainer: AutoDL Team <root@example.com>
+Description: Clash proxy manager for AutoDL
+ Clash for AutoDL 是一个专为云深度学习环境设计的代理工具，
+ 支持订阅链接，自动配置系统代理，提供方便的命令行工具。
+ 它使用Clash作为核心代理引擎，支持多种代理协议。 

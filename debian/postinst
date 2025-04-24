@@ -1,0 +1,10 @@
+#!/bin/bash
+set -e
+
+# 运行安装脚本
+if [ "$1" = "configure" ]; then
+    chmod +x /usr/share/clash-for-autodl/install.sh
+    /usr/share/clash-for-autodl/install.sh
+fi
+
+exit 0 

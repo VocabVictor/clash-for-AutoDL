@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e
+
+# 安装前：停止旧服务
+if [ -f /etc/systemd/system/clash-for-autodl.service ]; then
+    if systemctl is-active --quiet clash-for-autodl; then
+        systemctl stop clash-for-autodl || true
+    fi
+fi
+
+exit 0 

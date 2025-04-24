@@ -39,7 +39,7 @@
 - 此项目不提供任何订阅信息，请自行准备Clash订阅地址。
 - 运行前请手动更改`.env`文件中的`CLASH_URL`变量值，否则无法正常运行。
 
-> **注意**：当你在使用此项目时，遇到任何无法独自解决的问题请优先前往 [issues](https://github.com/VocabVictor/clash-for-AutoDL/issues?q=is%3Aissue+is%3Aclosed) 寻找解决方法。由于空闲时间有限，后续将不再对Issues中 “已经解答”、“已有解决方案” 的问题进行重复性的回答。
+> **注意**：当你在使用此项目时，遇到任何无法独自解决的问题请优先前往 [issues](https://github.com/VocabVictor/clash-for-AutoDL/issues?q=is%3Aissue+is%3Aclosed) 寻找解决方法。由于空闲时间有限，后续将不再对Issues中 "已经解答"、"已有解决方案" 的问题进行重复性的回答。
 
 <br>
 
@@ -250,3 +250,13 @@ Secret忘记了，也可以上conf/config.yaml文件中查看。
    目前此项目已集成自动识别和转换clash配置文件的功能。如果依然无法使用，则需要通过自建或者第三方平台（不推荐，有泄露风险）对订阅地址转换。
 
 3. 程序日志中出现`error: unsupported rule type RULE-SET`报错，解决方法查看官方[WIKI](https://github.com/Dreamacro/clash/wiki/FAQ#error-unsupported-rule-type-rule-set)
+
+## Ubuntu 支持
+
+我们现在提供了 Ubuntu 和 Debian 发行版的专用安装包，使安装更加简单。详情请参考 [Ubuntu 安装指南](README.ubuntu.md)。
+
+```bash
+# Ubuntu/Debian 安装方法
+sudo dpkg -i clash-for-autodl-1.0.0.deb
+sudo apt-get install -f  # 解决依赖问题
+```

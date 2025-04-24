@@ -1,0 +1,21 @@
+#!/bin/bash
+set -e
+
+# 停止服务并从系统服务中删除
+if [ -f /etc/systemd/system/clash-for-autodl.service ]; then
+    if systemctl is-active --quiet clash-for-autodl; then
+        systemctl stop clash-for-autodl || true
+    fi
+    if systemctl is-enabled --quiet clash-for-autodl; then
+        systemctl disable clash-for-autodl || true
+    fi
+    rm -f /etc/systemd/system/clash-for-autodl.service
+    systemctl daemon-reload
+fi
+
+# 删除软链接
+rm -f /usr/local/bin/clash-start
+rm -f /usr/local/bin/clash-restart
+rm -f /usr/local/bin/clash-shutdown
+
+exit 0 
